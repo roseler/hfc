@@ -1,4 +1,5 @@
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, Birch
+from sklearn.mixture import GaussianMixture
 
 from utils.unsw_loader import load_unsw_datasets
 from utils.hfc import hfc_pipeline
@@ -12,16 +13,16 @@ from models.svm import train_svm
 from models.mlp import train_mlp
 
 def run_models(X_train, y_train, X_test, y_test, name=""):
-    print(f"\\n[{name} | Random Forest]")
+    print(f"\n[{name} | Random Forest]")
     train_rf(X_train, X_test, y_test)
 
-    print(f"\\n[{name} | KNN]")
+    print(f"\n[{name} | KNN]")
     train_knn(X_train, X_test, y_test)
 
-    print(f"\\n[{name} | SVM]")
+    print(f"\n[{name} | SVM]")
     train_svm(X_train, X_test, y_test)
 
-    print(f"\\n[{name} | MLP]")
+    print(f"\n[{name} | MLP]")
     train_mlp(X_train, X_test, y_test)
 
 def main():
@@ -30,10 +31,17 @@ def main():
     
     X_train, y_train, X_test, y_test = load_unsw_datasets(train_path, test_path)
 
-    # HFC - KMeans
-    hfc_kmeans_train = hfc_pipeline(X_train, y_train, clustering_method=KMeans(n_clusters=2, random_state=42))
-    hfc_kmeans_test = hfc_pipeline(X_test, y_test, clustering_method=KMeans(n_clusters=2, random_state=42))
-    run_models(hfc_kmeans_train, y_train, hfc_kmeans_test, y_test, name="HFC-KMeans")
+    # HFC - with clustering variations
+    clustering_methods = {
+        "HFC-KMeans": KMeans(n_clusters=2, random_state=42),
+        "HFC-Birch": Birch(n_clusters=2),
+        "HFC-GMM": GaussianMixture(n_components=2, random_state=42)
+    }
+
+    for name, clusterer in clustering_methods.items():
+        hfc_train = hfc_pipeline(X_train, y_train, clustering_method=clusterer)
+        hfc_test = hfc_pipeline(X_test, y_test, clustering_method=clusterer)
+        run_models(hfc_train, y_train, hfc_test, y_test, name=name)
 
     # Polynomial Feature Expansion
     pfe_train = pfe_pipeline(X_train)
