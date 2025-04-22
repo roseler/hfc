@@ -1,4 +1,5 @@
-from sklearn.cluster import KMeans, AgglomerativeClustering, DBSCAN
+from sklearn.cluster import KMeans,Birch
+from sklearn.mixture import GaussianMixture
 from utils.unsw_loader import load_unsw_datasets
 from utils.hfc import hfc_pipeline
 from models.random_forest import train_rf
@@ -26,9 +27,10 @@ def run_pipeline_with_clustering(clustering_method, name):
     train_mlp(X_train_hfc, X_test_hfc, y_test)
 
 def main():
-    clustering_methods = {
+    clustering_methods = { 
         "KMeans": KMeans(n_clusters=2, random_state=42),
-        "DBSCAN": DBSCAN(eps=0.8, min_samples=5)
+        "Birch": Birch(n_clusters=2),
+        "GMM": GaussianMixture(n_components=2, random_state=42)
     }
 
     for name, method in clustering_methods.items():
