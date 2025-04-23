@@ -6,11 +6,11 @@ from scipy.stats import variation, zscore
 
 def compute_feature_stats(X_scaled: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame({
-        "std_dev": X_scaled.std(),
-        "mean": X_scaled.mean(),
-        "coefficient_of_variation": variation(X_scaled, axis=0),
-        "zscore_mean": zscore(X_scaled, axis=0).mean(axis=0)
-    }).sort_values(by='coefficient_of_variation', ascending=False)
+    "std_dev": X_scaled.std(),
+    "mean": X_scaled.mean(),
+    "coefficient_of_variation": variation(X_scaled, axis=0),
+    "zscore_mean": zscore(X_scaled, axis=0).mean(axis=0)
+})
 
 def suggest_hfc_parameters(stats_df: pd.DataFrame, cov_threshold: float = 1.0):
     top_n = (stats_df['coefficient_of_variation'] > cov_threshold).sum()
@@ -35,6 +35,7 @@ def hfc_pipeline(X, y=None, clustering_method=None, contrast_threshold=0.5, cov_
     chord_rule_map = {}
     chord_coverage = {}
 
+    
     stats_df = compute_feature_stats(X_scaled)
     auto_top_n, auto_min_votes = suggest_hfc_parameters(stats_df, cov_threshold)
     final_min_votes = min_votes if min_votes is not None else auto_min_votes
@@ -48,22 +49,20 @@ def hfc_pipeline(X, y=None, clustering_method=None, contrast_threshold=0.5, cov_
         if not selected_features:
             continue
 
-        # Binary matrix for each feature condition
         condition_matches = pd.DataFrame({
             f: (X_scaled[f] > cluster_mean[f]).astype(int)
             for f in selected_features
         })
 
-        # Voting-based activation
         votes = condition_matches.sum(axis=1)
         motif_series = (votes >= final_min_votes).astype(int)
-        chord_name = f"hfc_chord_c{k}"
+        chord_name = f"hfc_chord_c{{k}}"
         motif_series.name = chord_name
         motif_list.append(motif_series)
 
         chord_feature_map[chord_name] = selected_features
-        chord_rule_map[chord_name] = f"Match if ≥ {final_min_votes} of:\n" + "\n".join(
-            [f"{f} > {cluster_mean[f]:.3f}" for f in selected_features])
+        chord_rule_map[chord_name] = f"Match if ≥ {{final_min_votes}} of:\\n" + "\\n".join(
+            [f"{{f}} > {{cluster_mean[f]:.3f}}" for f in selected_features])
         chord_coverage[chord_name] = int(motif_series.sum())
 
     motifs_df = pd.concat(motif_list, axis=1) if motif_list else pd.DataFrame(index=X.index)
