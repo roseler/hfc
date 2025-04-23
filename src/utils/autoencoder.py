@@ -2,12 +2,12 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Suppress TF info/warning
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'  # Disable oneDNN ops
 
-# ⬇️ Now import everything else
+# Now import everything else
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Dense
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.models import Model # type: ignore
+from tensorflow.keras.layers import Input, Dense # type: ignore
+from tensorflow.keras.optimizers import Adam # type: ignore
 
 
 def autoencoder_pipeline(X, encoding_dim=8, epochs=20, batch_size=16):

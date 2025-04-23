@@ -1,0 +1,13 @@
+Chord,Rule,Coverage Count,Coverage (%)
+hfc_chord_c0,"Match if ≥ 11 of:
+rate > -0.572
+...",1258,0.7188571428571429
+hfc_chord_c5,"Match if ≥ 11 of:
+rate > -0.571
+...",3236,1.8491428571428572
+hfc_chord_c7,"Match if ≥ 11 of:
+rate > -0.571
+...",5760,3.2914285714285714
+hfc_chord_c8,"Match if ≥ 11 of:
+rate > -0.572
+...",3105,1.7742857142857145
