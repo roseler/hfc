@@ -2,23 +2,22 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans, Birch
+from sklearn.mixture import GaussianMixture
 
 from dataset_loader.unsw_loader import load_unsw_datasets
 from dataset_loader.ids2017_loader import load_ids2017_dataset
 from dataset_loader.ids2018_loader import load_ids2018_dataset
 
 from utils.hfc import hfc_pipeline, compute_feature_stats, suggest_hfc_parameters
-from utils.hfc_pipeline_cic2017 import hfc_pipeline_fit_cic2017, hfc_pipeline_transform_cic2017
-from utils.hfc_pipeline_cse2018 import hfc_pipeline_fit_cse2018, hfc_pipeline_transform_cse2018
-
 from utils.pfe import pfe_pipeline
 from utils.autoencoder import autoencoder_pipeline
 from utils.mutual_info import mi_pipeline, mi_pipeline_transform
+from utils.monitor import monitor_and_run
 
 from models.random_forest import train_rf
 from models.knn import train_knn
 from models.mlp import train_mlp
-
 
 def run_models(X_train, y_train, X_test, y_test, name=""):
     print(f"\n[{name} | Random Forest]")
@@ -30,49 +29,28 @@ def run_models(X_train, y_train, X_test, y_test, name=""):
     print(f"\n[{name} | MLP]")
     train_mlp(X_train, X_test, y_train, y_test)
 
+def print_hfc_summary(clustering_name, chord_map, rule_map, coverage_map, total_samples):
+    print(f"\n--- HFC Rule Summary ({clustering_name}) ---")
+    for chord in chord_map:
+        print(f"\n{chord} — Features: {chord_map[chord]}")
+        print(f"Rule:\n{rule_map[chord]}")
+        print(f"Coverage: {coverage_map[chord]} samples ({coverage_map[chord] / total_samples * 100:.2f}%)")
 
-def run_hfc_custom(X_train, y_train, X_test, y_test, dataset_type):
-    print(f"\n--- HFC Feature Engineering for {dataset_type} ---")
+def run_hfc_with_clustering(X_train, y_train, X_test, y_test, clustering_method, clustering_name, dataset_type):
+    print(f"\n--- Running HFC with {clustering_name} Clustering ---")
+    (hfc_outputs_train, _) = monitor_and_run(hfc_pipeline, X_train, y_train, clustering_method=clustering_method)
+    motifs_train_df, chord_map, rule_map, coverage_map = hfc_outputs_train
+    print_hfc_summary(clustering_name, chord_map, rule_map, coverage_map, len(X_train))
+    motifs_train_df['label'] = y_train.values
 
-    scaler = StandardScaler()
-    X_scaled = pd.DataFrame(scaler.fit_transform(X_train), columns=X_train.columns)
-    feature_stats = compute_feature_stats(X_scaled)
-    _, min_votes = suggest_hfc_parameters(feature_stats, cov_threshold=1.0)
+    expected_columns = motifs_train_df.drop(columns=["label"]).columns
 
-    if dataset_type == "UNSW":
-        from clustering.kmeans_runner import run_kmeans_hfc
-        from clustering.gmm_runner import run_gmm_hfc
-        from clustering.birch_runner import run_birch_hfc
+    (hfc_outputs_test, _) = monitor_and_run(hfc_pipeline, X_test, y_test, clustering_method=clustering_method)
+    motifs_test_df = hfc_outputs_test[0]
+    motifs_test_df = motifs_test_df.reindex(columns=expected_columns, fill_value=0)
+    motifs_test_df['label'] = y_test.values
 
-        run_kmeans_hfc(X_train, y_train, X_test, y_test, min_votes)
-        run_gmm_hfc(X_train, y_train, X_test, y_test, min_votes)
-        run_birch_hfc(X_train, y_train, X_test, y_test, min_votes)
-
-    elif dataset_type == "CICIDS2017":
-        from utils.hfc_pipeline_cic2017 import hfc_pipeline_fit_cic2017, hfc_pipeline_transform_cic2017
-
-        motifs_train, chord_map, rule_map, coverage_map, scaler = hfc_pipeline_fit_cic2017(
-            X_train, y_train, contrast_threshold=0.5, cov_threshold=1.0, min_votes=min_votes)
-
-        motifs_test = hfc_pipeline_transform_cic2017(X_test, rule_map, scaler)
-
-        # Align test features to train
-        motifs_test = motifs_test.reindex(columns=motifs_train.drop(columns=["label"]).columns, fill_value=0)
-
-        run_models(motifs_train.drop(columns=["label"]), y_train, motifs_test, y_test, name="HFC-CIC2017")
-
-    elif dataset_type == "CSE-CIC-IDS2018":
-        from utils.hfc_pipeline_cse2018 import hfc_pipeline_fit_cse2018, hfc_pipeline_transform_cse2018
-
-        motifs_train, chord_map, rule_map, coverage_map, scaler = hfc_pipeline_fit_cse2018(
-            X_train, y_train, contrast_threshold=0.5, cov_threshold=1.0, min_votes=min_votes)
-
-        motifs_test = hfc_pipeline_transform_cse2018(X_test, rule_map, scaler)
-
-        # Align test features to train
-        motifs_test = motifs_test.reindex(columns=motifs_train.drop(columns=["label"]).columns, fill_value=0)
-
-        run_models(motifs_train.drop(columns=["label"]), y_train, motifs_test, y_test, name="HFC-CSE2018")
+    run_models(motifs_train_df.drop(columns=["label"]), y_train, motifs_test_df.drop(columns=["label"]), y_test, name=f"HFC-{dataset_type}-{clustering_name}")
 
 
 def main():
@@ -97,30 +75,31 @@ def main():
         print("Invalid choice.")
         return
 
-    # === Run dataset-specific HFC ===
-    run_hfc_custom(X_train, y_train, X_test, y_test, dataset_type)
+    # === HFC for all clustering methods
+    run_hfc_with_clustering(X_train, y_train, X_test, y_test, KMeans(n_clusters=2), "KMeans", dataset_type)
+    run_hfc_with_clustering(X_train, y_train, X_test, y_test, GaussianMixture(n_components=2), "GMM", dataset_type)
+    run_hfc_with_clustering(X_train, y_train, X_test, y_test, Birch(n_clusters=10), "Birch", dataset_type)
 
     # === PFE
-    pfe_train = pfe_pipeline(X_train)
-    pfe_train['label'] = y_train.values
-    pfe_test = pfe_pipeline(X_test)
-    pfe_test['label'] = y_test.values
-    run_models(pfe_train.drop(columns=["label"]), y_train, pfe_test.drop(columns=["label"]), y_test, name="PFE")
+    # pfe_train, _ = monitor_and_run(pfe_pipeline, X_train)
+    # pfe_train['label'] = y_train.values
+    # pfe_test, _ = monitor_and_run(pfe_pipeline, X_test)
+    # pfe_test['label'] = y_test.values
+    # run_models(pfe_train.drop(columns=["label"]), y_train, pfe_test.drop(columns=["label"]), y_test, name="PFE")
 
     # === Mutual Information
-    mi_train, mi_selector = mi_pipeline(X_train, y_train)
-    mi_train['label'] = y_train.values
-    mi_test = mi_pipeline_transform(X_test, mi_selector)
-    mi_test['label'] = y_test.values
-    run_models(mi_train.drop(columns=["label"]), y_train, mi_test.drop(columns=["label"]), y_test, name="MI")
+    # (mi_train, mi_selector), _ = monitor_and_run(mi_pipeline, X_train, y_train)
+    # mi_train['label'] = y_train.values
+    # mi_test, _ = monitor_and_run(mi_pipeline_transform, X_test, mi_selector)
+    # mi_test['label'] = y_test.values
+    # run_models(mi_train.drop(columns=["label"]), y_train, mi_test.drop(columns=["label"]), y_test, name="MI")
 
     # === Autoencoder
-    ae_train = autoencoder_pipeline(X_train)
-    ae_train['label'] = y_train.values
-    ae_test = autoencoder_pipeline(X_test)
-    ae_test['label'] = y_test.values
-    run_models(ae_train.drop(columns=["label"]), y_train, ae_test.drop(columns=["label"]), y_test, name="Autoencoder")
-
+    # ae_train, _ = monitor_and_run(autoencoder_pipeline, X_train)
+    # ae_train['label'] = y_train.values
+    # ae_test, _ = monitor_and_run(autoencoder_pipeline, X_test)
+    # ae_test['label'] = y_test.values
+    # run_models(ae_train.drop(columns=["label"]), y_train, ae_test.drop(columns=["label"]), y_test, name="Autoencoder")
 
 if __name__ == "__main__":
     main()
