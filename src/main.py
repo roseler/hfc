@@ -69,16 +69,16 @@ def main():
         X_train, X_test, y_train, y_test = load_ids2017_dataset("data/CICIDS_2017_Combined_Balanced_Shuffled.csv")
         dataset_type = "CICIDS2017"
     elif choice == "3":
-        X_train, X_test, y_train, y_test = load_ids2018_dataset("data/CSE-CIC-IDS2018 (02-14-2018)_2.csv")
+        X_train, X_test, y_train, y_test = load_ids2018_dataset("data/InSDN_Combined_Balanced_Shuffled.csv")
         dataset_type = "CSE-CIC-IDS2018"
     else:
         print("Invalid choice.")
         return
 
     # === HFC for all clustering methods
-    run_hfc_with_clustering(X_train, y_train, X_test, y_test, KMeans(n_clusters=2), "KMeans", dataset_type)
-    run_hfc_with_clustering(X_train, y_train, X_test, y_test, GaussianMixture(n_components=2), "GMM", dataset_type)
-    run_hfc_with_clustering(X_train, y_train, X_test, y_test, Birch(n_clusters=10), "Birch", dataset_type)
+    run_hfc_with_clustering(X_train, y_train, X_test, y_test, KMeans(n_clusters=7), "KMeans", dataset_type)
+    run_hfc_with_clustering(X_train, y_train, X_test, y_test, GaussianMixture(n_components=9), "GMM", dataset_type)
+    run_hfc_with_clustering(X_train, y_train, X_test, y_test, Birch(n_clusters=2), "Birch", dataset_type)
 
     # === PFE
     # pfe_train, _ = monitor_and_run(pfe_pipeline, X_train)
