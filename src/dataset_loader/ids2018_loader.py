@@ -10,10 +10,10 @@ def load_ids2018_dataset(filepath):
     df.columns = df.columns.str.strip()
 
     # Binary classification: Normal = 0, Attack = 1
-    df['label'] = df['attack_cat'].apply(lambda x: 0 if str(x).strip() == 'Benign' else 1)
+    df['label'] = df['Label'].apply(lambda x: 0 if str(x).strip() == 'Normal' else 1)
 
-    # Drop original attack_cat and keep only numeric columns
-    df = df.drop(columns=['attack_cat'])
+    # Drop original Label and keep only numeric columns
+    df = df.drop(columns=['Label'])
     df = df.select_dtypes(include=['number'])
 
     # Replace inf/-inf with NaN, then fill with 0
