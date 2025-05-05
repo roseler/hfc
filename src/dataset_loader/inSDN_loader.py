@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 
-def load_ids2018_dataset(filepath):
+def load_inSDN_dataset(filepath):
     df = pd.read_csv(filepath)
     df.columns = df.columns.str.strip()
 

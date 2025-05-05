@@ -42,8 +42,8 @@ def hfc_pipeline_fit_cse2018(X, y, contrast_threshold=0.3, cov_threshold=1.0, mi
         ).astype(int)
         coverage_map[chord_name] = int(motif_series.sum())
 
-    motifs_df = pd.DataFrame({chord: rule(X_scaled) for chord, rule in rule_map.items()})
-    motifs_df['label'] = y.reset_index(drop=True)
+        motifs_df = pd.DataFrame({chord: rule(X_scaled) for chord, rule in rule_map.items()})
+        motifs_df['label'] = y.reset_index(drop=True)
 
     print("\\n[Chord Activation Summary by Class]")
     print(motifs_df.groupby("label").sum())

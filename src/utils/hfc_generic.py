@@ -2,7 +2,7 @@ from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
 
-def hfc_pipeline_fit(X, y, clustering_method=None, contrast_threshold=0.5, cov_threshold=1.0, min_votes=3):
+def hfc_pipeline_fit(X, y, clustering_method=None, contrast_threshold=0.3, cov_threshold=1, min_votes=3):
     """
     Unified HFC pipeline for all datasets. Accepts any clustering method.
     Default clustering is KMeans(n_clusters=3).

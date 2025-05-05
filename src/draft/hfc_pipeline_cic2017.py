@@ -6,7 +6,7 @@ import numpy as np
 def hfc_pipeline_fit_cic2017(X, y, contrast_threshold=0.2, cov_threshold=1.0, min_votes=2):
     scaler = StandardScaler()
     X_scaled = pd.DataFrame(scaler.fit_transform(X), columns=X.columns, index=X.index)
-    
+
     clustering = KMeans(n_clusters=3, random_state=42)
     clusters = clustering.fit_predict(X_scaled)
     clusters = pd.Series(clusters, index=X_scaled.index)
@@ -45,10 +45,10 @@ def hfc_pipeline_fit_cic2017(X, y, contrast_threshold=0.2, cov_threshold=1.0, mi
     motifs_df = pd.DataFrame({chord: rule(X_scaled) for chord, rule in rule_map.items()})
     motifs_df['label'] = y.reset_index(drop=True)
 
-    return motifs_df, chord_map, rule_map, coverage_map
+    return motifs_df, chord_map, rule_map, coverage_map, scaler  # Return the scaler too
 
 
-def hfc_pipeline_transform_cic2017(X, rule_map):
-    scaler = StandardScaler()
-    X_scaled = pd.DataFrame(scaler.fit_transform(X), columns=X.columns, index=X.index)
+
+def hfc_pipeline_transform_cic2017(X, rule_map, scaler):
+    X_scaled = pd.DataFrame(scaler.transform(X), columns=X.columns, index=X.index)
     return pd.DataFrame({chord: rule(X_scaled) for chord, rule in rule_map.items()})
