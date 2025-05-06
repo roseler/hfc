@@ -34,7 +34,7 @@ runtimes["HFC_Birch"] = run_hfc_with_clustering(
     X_train, y_train, X_test, y_test,
     Birch(n_clusters=2), "Birch", dataset_type
 )
-
+```
 
 To further fine-tune chord generation, you can modify the following thresholds inside the `hfc_pipeline(...)` call within each `run_hfc_with_clustering(...)` block:
 
