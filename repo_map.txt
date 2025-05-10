@@ -1,0 +1,27 @@
+hfc/
+├── README.md               # Project overview, install & usage examples
+├── requirements.txt        # Exact Python dependencies
+├── environment.yml         # Conda env spec (optional)
+│
+├── dataset_loader/         # Load & preprocess raw IDS datasets
+│   ├── unsw_loader.py      # UNSW-NB15
+│   ├── ids2017_loader.py   # CICIDS-2017
+│   └── inSDN_loader.py     # inSDN
+│
+├── utils/                  # Core pipelines & helpers
+│   ├── hfc_pipeline.py     # Clustering → contrast scoring → chord induction
+│   ├── contrast_score.py   # Computes per-feature contrast metrics
+│   ├── rule_induction.py   # Builds binary “chord” features from high contrasts
+│   ├── pfe_pipeline.py     # Baseline Polynomial Feature Expansion
+│   ├── mi_pipeline.py      # Mutual Information feature selection
+│   ├── autoencoder_pipeline.py  # Autoencoder-based embeddings
+│   └── monitor.py          # Logging & performance monitoring utilities
+│
+├── models/                 # Classifier training modules
+│   ├── random_forest.py
+│   ├── knn.py
+│   └── mlp.py
+│
+├── scripts/                # Command-line entry points
+│   ├── main.py             # Full HFC pipeline driver
+│   └── best_k_evaluator.py # Silhouette & BIC cluster-count selector

@@ -17,7 +17,7 @@ def suggest_hfc_parameters(stats_df: pd.DataFrame, cov_threshold: float = 1.0):
     min_votes = max(2, int(np.ceil(0.5 * top_n)))
     return top_n, min_votes
 
-def hfc_pipeline(X, y=None, clustering_method=None, contrast_threshold=0.3, cov_threshold=0.7, min_votes=None):
+def hfc_pipeline(X, y=None, clustering_method=None, contrast_threshold=0.5, cov_threshold=1, min_votes=None):
     scaler = StandardScaler()
     X_scaled = pd.DataFrame(scaler.fit_transform(X), columns=X.columns, index=X.index)
 
